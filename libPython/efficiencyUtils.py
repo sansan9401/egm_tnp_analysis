@@ -313,7 +313,7 @@ class efficiencyList:
         return h2
         
                                 
-    def pt_1DGraph_list(self, doScaleFactor):
+    def pt_1DGraph_list(self, typeGR=0):
 #        self.symmetrizeSystVsEta()
         self.combineSyst()
         listOfGraphs = {}
@@ -342,13 +342,17 @@ class efficiencyList:
                     effAverage.combineSyst(effAverage.effData,effAverage.effMC)
                     aValue  = effAverage.effData
                     anError = effAverage.systCombined 
-                    if doScaleFactor :
+                    if typeGR == 1:
                         if effAverage.effMC>0:
                             aValue  = effAverage.effData      / effAverage.effMC
                             anError = effAverage.systCombined / effAverage.effMC
                         else:
                             aValue  = 0.
                             anError = 0.
+                    if typeGR == -1:
+                        aValue  = effAverage.effMC
+                        anError = 0#effAverage.errEffMC
+
                     listOfGraphs[etaBin].append( {'min': ptBin[0], 'max': ptBin[1],
                                                   'val': aValue  , 'err': anError } ) 
                                                   

@@ -8,6 +8,11 @@ import pickle
 import shutil
 from datetime import datetime
 
+TNP_BASE=os.getenv("TNP_BASE")
+if TNP_BASE=="":
+    print("Please source setup.sh")
+    exit(1)
+
 parser = argparse.ArgumentParser(description='tnp EGM fitter')
 parser.add_argument('--checkBins'  , action='store_true'  , help = 'check  bining definition')
 parser.add_argument('--createBins' , action='store_true'  , help = 'create bining definition')
@@ -26,7 +31,6 @@ parser.add_argument('--fitlog'     , action='store_true'  , help = 'save fitting
 parser.add_argument('--jobIndex'   , default=-1,type = int, help = 'condor job index (for internal)')
 parser.add_argument('--flag'       , default = None       , help ='WP to test')
 parser.add_argument('settings'     , default = None       , help = 'setting file [mandatory]')
-
 
 args = parser.parse_args()
 
@@ -64,7 +68,10 @@ if args.checkBins:
     if not tnpConf.additionalCutBase is None:
         if args.flag in tnpConf.additionalCutBase:
             tnpConf.cutBase+=' && '+tnpConf.additionalCutBase[args.flag]
-    tnpBins = tnpBiner.createBins(tnpConf.biningDef,tnpConf.cutBase)
+    if hasattr(tnpConf,"flagBinningDef") and args.flag in tnpConf.flagBinningDef:
+        tnpBins = tnpBiner.createBins(tnpConf.flagBinningDef[args.flag],tnpConf.cutBase)
+    else:
+        tnpBins = tnpBiner.createBins(tnpConf.biningDef,tnpConf.cutBase)
     tnpBiner.tuneCuts( tnpBins, tnpConf.additionalCuts )
     for ib in range(len(tnpBins['bins'])):
         print tnpBins['bins'][ib]['name']
@@ -78,7 +85,10 @@ if args.createBins:
     if os.path.exists( outputDirectory ):
             shutil.rmtree( outputDirectory )
     os.makedirs( outputDirectory )
-    tnpBins = tnpBiner.createBins(tnpConf.biningDef,tnpConf.cutBase)
+    if hasattr(tnpConf,"flagBinningDef") and args.flag in tnpConf.flagBinningDef:
+        tnpBins = tnpBiner.createBins(tnpConf.flagBinningDef[args.flag],tnpConf.cutBase)
+    else:
+        tnpBins = tnpBiner.createBins(tnpConf.biningDef,tnpConf.cutBase)
     tnpBiner.tuneCuts( tnpBins, tnpConf.additionalCuts )
     pickle.dump( tnpBins, open( '%s/bining.pkl'%(outputDirectory),'wb') )
     print 'created dir: %s ' % outputDirectory
@@ -122,22 +132,29 @@ if args.createHists:
                     print 'submitting', args.njob, 'jobs, nmax=', args.nmax
                     timestamp=datetime.now().strftime("%Y%m%d_%H%M%S")
                     jobbatchname='createHists_%s_%s_%s'%(os.path.splitext(os.path.basename(args.settings))[0],args.flag,sampleType)
-                    working_dir='log/'+timestamp+'_'+jobbatchname
+                    working_dir=TNP_BASE+'/log/'+timestamp+'_'+jobbatchname
                     os.system('mkdir '+working_dir)
+                    with open(working_dir+'/run.sh','w') as f:
+                        f.write(
+                            '''#!/bin/bash
+                            cd $TNP_BASE
+                            python tnpEGM_fitter.py {0} --flag {1} --sample {2} --createHists --njob {3} --jobIndex $1
+                            exit $?
+                            '''.format(args.settings,args.flag,sampleType,str(args.njob)))
+                    os.system("chmod +x "+working_dir+'/run.sh')
                     with open(working_dir+'/condor.jds','w') as f:
                         f.write(
-'''
-executable = tnpEGM_fitter.py
-arguments = {0} --flag {1} --sample {2} --createHists --njob {3} --jobIndex $(Process)
-output = {4}/job$(Process).out
-error = {4}/job$(Process).err
-log = {4}/condor.log
-{5}
-jobbatchname = {6}
-getenv = True
-queue {3}
-'''.format(args.settings,args.flag,sampleType,str(args.njob),working_dir,'concurrency_limits = n'+str(args.nmax)+'.'+os.getenv("USER") if args.nmax>0 else '',jobbatchname))
-                    os.system('condor_submit '+working_dir+'/condor.jds')                        
+                            '''executable = {0}/run.sh
+                            arguments = $(Process)
+                            output = {0}/job$(Process).out
+                            error = {0}/job$(Process).err
+                            log = {0}/condor.log
+                            {1}
+                            jobbatchname = {2}
+                            getenv = True
+                            queue {3}
+                            '''.format(working_dir,'concurrency_limits = n'+str(args.nmax)+'.'+os.getenv("USER") if args.nmax>0 else '',jobbatchname,str(args.njob)))
+                    os.system('condor_submit '+working_dir+'/condor.jds')
                     print 'Waiting jobs...'
                     os.system('condor_wait '+working_dir+'/condor.log')
                     outfiles=[]
@@ -206,7 +223,7 @@ if  args.doFit:
                 shutil.rmtree(os.path.splitext(sampleToFit.fitFile)[0])
             os.makedirs(os.path.splitext(sampleToFit.fitFile)[0])
             timestamp=datetime.now().strftime("%Y%m%d_%H%M%S")
-            arguments='%s --flag %s --doFit -n %d --jobIndex=$(Process)'%(args.settings,args.flag,args.njob)
+            arguments='%s --flag %s --doFit -n %d --jobIndex=$1'%(args.settings,args.flag,args.njob)
             jobbatchname='doFit_%s_%s'%(os.path.splitext(os.path.basename(args.settings))[0],args.flag)
             priority=''
             if args.mcSig :
@@ -219,22 +236,29 @@ if  args.doFit:
             elif args.altBkg:
                 jobbatchname+='_altBkg'
                 arguments+=' --altBkg'
-            working_dir='log/'+timestamp+'_'+jobbatchname
+            working_dir=TNP_BASE+'/log/'+timestamp+'_'+jobbatchname
             os.system('mkdir '+working_dir)
+            with open(working_dir+'/run.sh','w') as f:
+                f.write(
+                    '''#!/bin/bash
+                    cd $TNP_BASE
+                    python tnpEGM_fitter.py {0}
+                    exit $?
+                    '''.format(arguments))
+            os.system('chmod +x '+working_dir+'/run.sh')
             with open(working_dir+'/condor.jds','w') as f:
                 f.write(
-'''
-executable = tnpEGM_fitter.py
-arguments = {0}
-output = {1}/job$(Process).out
-error = {1}/job$(Process).err
-log = {1}/condor.log
-{2}
-jobbatchname = {3}
-getenv = True
-{4}
-queue {5}
-'''.format(arguments,working_dir,'concurrency_limits = n'+str(args.nmax)+'.'+os.getenv("USER") if args.nmax>0 else '',jobbatchname,priority,str(len(tnpBins['bins']))))
+                    '''executable = {0}/run.sh
+                    arguments = $(Process)
+                    output = {0}/job$(Process).out
+                    error = {0}/job$(Process).err
+                    log = {0}/condor.log
+                    {1}
+                    jobbatchname = {2}
+                    getenv = True
+                    {3}
+                    queue {4}
+                    '''.format(working_dir,'concurrency_limits = n'+str(args.nmax)+'.'+os.getenv("USER") if args.nmax>0 else '',jobbatchname,priority,str(len(tnpBins['bins']))))
             #if args.fitlog: pythoncmd+=' &> log/'+logname
             #else: pythoncmd+=' &> /dev/null'                
 

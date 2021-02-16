@@ -332,9 +332,9 @@ def doEGM_SFs(filein, lumi, axis = ['pT','eta'] ):
     cDummy.Print( pdfout + "[" )
 
 
-    EffiGraph1D( effGraph.pt_1DGraph_list( False ) , #eff Data
-                 None, 
-                 effGraph.pt_1DGraph_list( True ) , #SF
+    EffiGraph1D( effGraph.pt_1DGraph_list( typeGR = 0 ) , #eff Data
+                 effGraph.pt_1DGraph_list( typeGR = -1 ), #eff MC
+                 effGraph.pt_1DGraph_list( typeGR = +1 ) , #SF
                  pdfout,
                  xAxis = axis[0], yAxis = axis[1] )
 #EffiGraph1D( effGraph.pt_1DGraph_list_customEtaBining(customEtaBining,False) , 

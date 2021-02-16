@@ -2,14 +2,14 @@
 
 if [ -z "$1" ] || [ -z "$2" ]
 then
-    echo "usage: $0 CONFIGFILE FLAG [NCORE=60] [NMAX=100]"
+    echo "usage: $0 CONFIGFILE FLAG [NCORE=100] [NMAX=200]"
     echo "example: $0 etc/config/AFBElectronID2017.py MediumID_QPlus 50"
     exit 1
 fi
 CONFIGFILE=$1
 FLAG=$2
-NCORE=${3:-60}
-NMAX=${4:-100}
+NCORE=${3:-100}
+NMAX=${4:-200}
 WAITLIST1=()
 WAITLIST2=()
 
