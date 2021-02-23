@@ -1,4 +1,3 @@
-./RunTnP.sh etc/config/AFBElectronTriggerUL2017_v3.py Ele27Test_MediumID_QPlus
 ./RunTnP.sh etc/config/AFBElectronIDUL2017_v3.py MediumID_QPlus
 ./RunTnP.sh etc/config/AFBElectronIDUL2017_v3.py MediumID_QMinus
 ./RunTnP.sh etc/config/AFBElectronIDUL2017_v3.py TightID_Selective_QPlus

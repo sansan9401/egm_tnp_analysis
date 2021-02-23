@@ -156,9 +156,7 @@ def makePassFailHistograms( sample, flag, bindef, var ):
         #removeNegativeBins(hFail[ib])
         print "ib:",ib
         hPass[ib].Write(hPass[ib].GetName())
-        hPass_ss[ib].Write(hPass_ss[ib].GetName())
         hFail[ib].Write(hFail[ib].GetName())
-        hFail_ss[ib].Write(hFail_ss[ib].GetName())
 
         bin1 = 1
         bin2 = hPass[ib].GetXaxis().GetNbins()
