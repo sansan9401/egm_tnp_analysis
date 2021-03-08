@@ -362,6 +362,18 @@ if args.sumUp:
             effis['mcAlt' ][0],
             effis['tagSel'][0],
             )
+        if float(v2Range[2])<20.1:
+            astr =  '%+8.3f\t%+8.3f\t%+8.3f\t%+8.3f\t%5.3f\t%5.3f\t%5.3f\t%5.3f\t%5.3f\t%5.3f\t%5.3f\t%5.3f' % (
+                float(v1Range[0]), float(v1Range[2]),
+                float(v2Range[0]), float(v2Range[2]),
+                effis['dataAltBkg'][0],effis['dataAltBkg'][1],
+                effis['mcNominal'  ][0],effis['mcNominal'  ][1],
+                effis['dataNominal' ][0],
+                effis['dataAltSig' ][0],
+                effis['mcAlt' ][0],
+                effis['tagSel'][0],
+            )
+            
         print astr
         fOut.write( astr + '\n' )
     fOut.close()

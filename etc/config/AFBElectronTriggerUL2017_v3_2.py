@@ -12,7 +12,7 @@ samplesDef['tagSel'].rename('mcAltSel_'+samplesDef['tagSel'].name)
 samplesDef['tagSel'].set_cut('tag_Ele_pt > 38 && '+tight_mcTrue)
 additionalCuts={}
 
-baseOutDir = 'results/AFBElectronTriggerUL2017_v3_1/'
+baseOutDir = 'results/AFBElectronTriggerUL2017_v3_2/'
 tnpTreeDir = 'tnpEleTrig'
 cutBase   = 'tag_Ele_pt > 35 && abs(tag_sc_eta) < 2.1 && el_q*tag_Ele_q < 0 && ( el_pt<20 ? sqrt( 2*event_met_pfmet*tag_Ele_pt*(1-cos(event_met_pfphi-tag_Ele_phi))) < 45 : 1 )'
 additionalCutBase = {

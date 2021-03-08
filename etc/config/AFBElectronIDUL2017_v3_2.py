@@ -11,7 +11,7 @@ samplesDef['mcAlt'].set_cut(tight_mcTrue)
 samplesDef['tagSel'].rename('mcAltSel_'+samplesDef['tagSel'].name)
 samplesDef['tagSel'].set_cut('tag_Ele_pt > 38 && '+tight_mcTrue)
 
-baseOutDir = 'results/AFBElectronIDUL2017_v3_1/'
+baseOutDir = 'results/AFBElectronIDUL2017_v3_2/'
 tnpTreeDir = 'tnpEleIDs'
 cutBase   = 'tag_Ele_pt > 35 && abs(tag_sc_eta) < 2.1 && el_q*tag_Ele_q < 0'
 additionalCutBase = {
