@@ -311,6 +311,85 @@ class efficiencyList:
         h2.GetXaxis().SetTitle("SuperCluster #eta")
         h2.GetYaxis().SetTitle("p_{T} [GeV]")
         return h2
+
+    def ptEtaEfficiency_2DHisto(self, index=-1, stat=False, onlyError=False):
+        self.combineSyst()
+        ### first, define bining
+        xbins = []
+        ybins = []
+        for ptBin in self.effList.keys():
+            if not ptBin[0] in ybins:
+                ybins.append(ptBin[0])                
+            if not ptBin[1] in ybins:
+                ybins.append(ptBin[1])
+
+            for etaBin in self.effList[ptBin].keys():
+                if not etaBin[0] in xbins:
+                    xbins.append(etaBin[0])                
+                if not etaBin[1] in xbins:
+                    xbins.append(etaBin[1])
+        xbins.sort()
+        ybins.sort()
+        ## transform to numpy array for ROOT
+        xbinsTab = np.array(xbins)
+        ybinsTab = np.array(ybins)
+        htitle = 'e/#gamma efficiency'
+        hname  = 'h2_efficiencyEGamma' 
+        if onlyError:
+            htitle = 'e/#gamma uncertainties'
+            hname  = 'h2_uncertaintiesEGamma'             
+
+        h2 = rt.TH2F(hname,htitle,xbinsTab.size-1,xbinsTab,ybinsTab.size-1,ybinsTab)
+        for ix in range(1,h2.GetXaxis().GetNbins()+1):
+            for iy in range(1,h2.GetYaxis().GetNbins()+1):
+
+                for ptBin in self.effList.keys():
+                    if h2.GetYaxis().GetBinLowEdge(iy) < ptBin[0] or h2.GetYaxis().GetBinUpEdge(iy) > ptBin[1]:
+                        continue
+                    for etaBin in self.effList[ptBin].keys():
+                        if h2.GetXaxis().GetBinLowEdge(ix) < etaBin[0] or h2.GetXaxis().GetBinUpEdge(ix) > etaBin[1]:
+                            continue
+                        ## average MC efficiency
+                        etaBinPlus  = etaBin
+                        etaBinMinus = (-etaBin[1],-etaBin[0])
+                    
+                        effPlus  = self.effList[ptBin][etaBinPlus]
+                        effMinus = None
+                        if self.effList[ptBin].has_key(etaBinMinus):
+                            effMinus =  self.effList[ptBin][etaBinMinus] 
+
+                        averageMC = None
+                        if effMinus is None:
+                            averageMC = effPlus.effMC
+                            print " ---- efficiencyList: I did not find -eta bin!!!"
+                        else:                        
+                            averageMC   = (effPlus.effMC   + effMinus.effMC  )/2.
+
+                        if averageMC==0 or self.effList[ptBin][etaBin].effMC==0 : continue
+                        
+                        ### so this is h2D bin is inside the bining used by e/gamma POG
+                        if stat:
+                            if onlyError:
+                                if index==0:
+                                    h2.SetBinContent(ix,iy, self.effList[ptBin][etaBin].errEffData)
+                                    h2.SetBinError  (ix,iy, 0)
+                                elif index==1:
+                                    h2.SetBinContent(ix,iy, self.effList[ptBin][etaBin].errEffMC)
+                                    h2.SetBinError  (ix,iy, 0)
+                            else:
+                                if index==0:
+                                    h2.SetBinContent(ix,iy, self.effList[ptBin][etaBin].effData)
+                                    h2.SetBinError  (ix,iy, self.effList[ptBin][etaBin].errEffData)
+                                elif index==1:
+                                    h2.SetBinContent(ix,iy, self.effList[ptBin][etaBin].effMC)
+                                    h2.SetBinError  (ix,iy, self.effList[ptBin][etaBin].errEffMC)                                
+                        else:
+                            h2.SetBinContent(ix,iy, self.effList[ptBin][etaBin].altEff[index])
+                            h2.SetBinError  (ix,iy, 0)
+
+        h2.GetXaxis().SetTitle("SuperCluster #eta")
+        h2.GetYaxis().SetTitle("p_{T} [GeV]")
+        return h2
         
                                 
     def pt_1DGraph_list(self, typeGR=0):

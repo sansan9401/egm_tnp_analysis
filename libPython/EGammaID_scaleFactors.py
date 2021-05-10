@@ -314,7 +314,7 @@ def doEGM_SFs(filein, lumi, axis = ['pT','eta'] ):
     fileWithEff.close()
 
 ### massage the numbers a bit
-    effGraph.symmetrizeSystVsEta()
+    #effGraph.symmetrizeSystVsEta()
     effGraph.combineSyst()
 
     print " ------------------------------- "
@@ -391,6 +391,13 @@ def doEGM_SFs(filein, lumi, axis = ['pT','eta'] ):
     h2SF.Write('EGamma_SF2D',rt.TObject.kOverwrite)
     h2EffData.Write('EGamma_EffData2D',rt.TObject.kOverwrite)
     h2EffMC  .Write('EGamma_EffMC2D'  ,rt.TObject.kOverwrite)
+    effGraph.ptEtaEfficiency_2DHisto(0,stat=True).Write("EGamma_EffData2D_stat")
+    effGraph.ptEtaEfficiency_2DHisto(efficiency.iAltBkgModel).Write("EGamma_EffData2D_altBkg")
+    effGraph.ptEtaEfficiency_2DHisto(efficiency.iAltSigModel).Write("EGamma_EffData2D_altSig")
+    effGraph.ptEtaEfficiency_2DHisto(1,stat=True).Write("EGamma_EffMC2D_stat")
+    effGraph.ptEtaEfficiency_2DHisto(efficiency.iAltMCSignal).Write("EGamma_EffMC2D_altMC")
+    effGraph.ptEtaEfficiency_2DHisto(efficiency.iAltTagSelec).Write("EGamma_EffMC2D_altTag")
+
     for igr in range(len(listOfSF1D)):
         listOfSF1D[igr].Write( 'grSF1D_%d' % igr, rt.TObject.kOverwrite)
     rootout.Close()
